@@ -64,4 +64,5 @@ def url_from_scope(scope, trust_x_forwarded_proto=False):
     host = headers[b"host"]
     if trust_x_forwarded_proto and headers.get(b"x-forwarded-proto"):
         scheme = headers[b"x-forwarded-proto"]
+    print("SCOPE", scope)
     return (b"%s://%s%s" % (scheme, host, path)).decode("utf8")
