@@ -55,3 +55,16 @@ def asgi_wrapper(datasette):
 @hookimpl
 def extra_template_vars(request):
     return {"auth": request.scope.get("auth") if request else None}
+
+
+@hookimpl
+def actor_from_request(datasette, request):
+    print("request.scope", request.scope)
+    auth = request.scope.get("auth")
+    if not auth:
+        return
+    if not auth.get("id"):
+        return
+    return {
+        "id": auth.get("username")
+    }
