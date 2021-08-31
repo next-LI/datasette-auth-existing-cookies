@@ -138,9 +138,16 @@ class ExistingCookiesAuth:
 
     async def json_from_api_for_cookies(self, cookies, headers=None):
         headers = headers or {}
+        print("json_from_api_for_cookies headers", headers)
         api_url = self.api_url + "?" + urlencode(headers)
+        print("api_url", api_url)
+        print("cookies", cookies)
         response = await httpx.AsyncClient().get(api_url, cookies=cookies)
-        return response.json()
+        print("response", response)
+        try:
+            return response.json()
+        except json.decoder.JSONDecodeError:
+            return {}
 
     def build_auth_redirect(self, next_url):
         if self.next_secret:
@@ -155,6 +162,7 @@ class ExistingCookiesAuth:
         # on to the configured API endpoint and seeing what
         # we get back.
         original_cookies, cookie_hash = self.original_cookies_and_hash(scope)
+        print("original_cookies", original_cookies, "cookie_hash", cookie_hash)
         headers = {}
         header_dict = dict(scope["headers"])
         for header in self.headers_to_forward:
