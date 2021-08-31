@@ -47,10 +47,10 @@ class ExistingCookiesAuth:
             return await self.app(scope, receive, send)
         send = self.wrapped_send(send, scope)
         auth = self.auth_from_scope(scope)
-        if auth or (not self.require_auth):
+        if auth:
             await self.app(dict(scope, auth=auth), receive, send)
         else:
-            await self.handle_missing_auth(scope, receive, send)
+            await self.handle_missing_auth(scope, receive, send, redirect=self.require_auth)
 
     def wrapped_send(self, send, scope, set_cookies=None):
         async def wrapped_send(event):
