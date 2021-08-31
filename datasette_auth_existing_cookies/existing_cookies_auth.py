@@ -150,7 +150,7 @@ class ExistingCookiesAuth:
             redirect_param = "?next=" + quote(next_url)
         return self.auth_redirect_url + redirect_param
 
-    async def handle_missing_auth(self, scope, receive, send):
+    async def handle_missing_auth(self, scope, receive, send, redirect=True):
         # We authenticate the user by forwarding their cookies
         # on to the configured API endpoint and seeing what
         # we get back.
@@ -181,7 +181,7 @@ class ExistingCookiesAuth:
                     send, scope, set_cookies={self.cookie_name: signed_cookie}
                 ),
             )
-        else:
+        elif redirect:
             # Redirect user to the login page
             redirect_url = self.build_auth_redirect(
                 url_from_scope(
@@ -189,6 +189,8 @@ class ExistingCookiesAuth:
                 )
             )
             await send_html(send, "", 302, [["location", redirect_url]])
+        else:
+            await self.app(dict(scope, auth=auth), receive, send)
 
     async def access_forbidden(self, scope, receive, send, reason):
         html = """
