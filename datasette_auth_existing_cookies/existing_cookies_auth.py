@@ -98,52 +98,38 @@ class ExistingCookiesAuth:
 
     def auth_from_scope(self, scope):
         if "auth" in scope and scope.get("auth"):
-            print("Returning existing auth", scope["auth"])
             return scope["auth"]
         cookies = cookies_from_scope(scope)
-        print("cookies", cookies)
         auth_cookie = cookies.get(self.cookie_name)
-        print("auth_cookie", auth_cookie)
         if not auth_cookie:
             return None
         # Decode the signed cookie
         signer = URLSafeSerializer(self.cookie_secret, "auth-cookie")
-        print("signer", signer)
         try:
             decoded = signer.loads(auth_cookie)
-            print("decoded", decoded)
         except BadSignature:
             return None
         # Has the cookie expired?
         if self.cookie_ttl is not None:
             if "ts" not in decoded:
-                print('"ts" not in decoded"')
                 return None
             if (int(time.time()) - self.cookie_ttl) > decoded["ts"]:
-                print("Expired!")
                 return None
         # Check that our cookie's other_hash matches the MD5 of the
         # original cookies
         verify_hash = decoded.get("verify_hash")
-        print("verify_hash", verify_hash)
         if verify_hash is None:
             return None
         _, cookie_hash = self.original_cookies_and_hash(scope)
-        print("cookie_hash", cookie_hash)
         if not hmac.compare_digest(verify_hash, cookie_hash):
             return None
         # Passed all the tests, return the decoded auth cookie
-        print("decoded", decoded)
         return decoded
 
     async def json_from_api_for_cookies(self, cookies, headers=None):
         headers = headers or {}
-        print("json_from_api_for_cookies headers", headers)
         api_url = self.api_url + "?" + urlencode(headers)
-        print("api_url", api_url)
-        print("cookies", cookies)
         response = await httpx.AsyncClient().get(api_url, cookies=cookies)
-        print("response", response)
         try:
             return response.json()
         except json.decoder.JSONDecodeError:
@@ -162,7 +148,6 @@ class ExistingCookiesAuth:
         # on to the configured API endpoint and seeing what
         # we get back.
         original_cookies, cookie_hash = self.original_cookies_and_hash(scope)
-        print("original_cookies", original_cookies, "cookie_hash", cookie_hash)
         headers = {}
         header_dict = dict(scope["headers"])
         for header in self.headers_to_forward:
@@ -170,7 +155,6 @@ class ExistingCookiesAuth:
             if value:
                 headers[header] = value
         auth = await self.json_from_api_for_cookies(original_cookies, headers)
-        print("API auth response", auth)
         # If auth is not '{}' set cookie and forward request
         if auth:
             # ... unless it's a {"forbidden": reason}
